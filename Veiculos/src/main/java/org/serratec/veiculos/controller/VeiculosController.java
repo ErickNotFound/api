@@ -1,10 +1,13 @@
 package org.serratec.veiculos.controller;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.serratec.veiculos.domain.Veiculo;
+import org.serratec.veiculos.repository.VeiculosRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,54 +21,47 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/veiculos")
 public class VeiculosController {
-	private static List<Veiculo> veiculos = new ArrayList<>();
-	static {
-		veiculos.add(new Veiculo(1, "Ford", "Focus"));
-		veiculos.add(new Veiculo(2, "Mitsubishi", "Lancer"));
-		veiculos.add(new Veiculo(3, "Volvo", "Xc60"));
-		veiculos.add(new Veiculo(4, "Nissan", "GT-R"));
-	}
+
+	@Autowired
+	private VeiculosRepository veiculosRepository;
 
 	@GetMapping
-	public List<Veiculo> veiculosr() {
-		return veiculos;
+	public List<Veiculo> listar() {
+		return veiculosRepository.findAll();
 	}
 
 	@GetMapping("/{id}")
-	public Veiculo buscar(@PathVariable Integer id) {
-		for (int i = 0; i < veiculos.size(); i++) {
-			if (veiculos.get(i).getId().equals(id)) {
-				return veiculos.get(i);
-			}
+	public ResponseEntity<Veiculo> buscarId(@PathVariable Integer id) {
+		Optional<Veiculo> veiculo = veiculosRepository.findById(id);
+		if (veiculo.isPresent()) {
+			return ResponseEntity.ok(veiculo.get());
+		} else {
+			return ResponseEntity.notFound().build();
 		}
-		return null;
 	}
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Veiculo inserir(@RequestBody Veiculo veiculo) {
-		veiculos.add(veiculo);
-		return veiculo;
+		return veiculosRepository.save(veiculo);
 	}
 
 	@DeleteMapping("/{id}")
-	public void delete(@PathVariable Integer id) {
-		for (int i = 0; i < veiculos.size(); i++) {
-			if (veiculos.get(i).getId().equals(id)) {
-				veiculos.remove(i);
-				break;
-			}
+	public ResponseEntity<Void> excluir(@PathVariable Integer id) {
+		if (veiculosRepository.existsById(id)) {
+			veiculosRepository.deleteById(id);
+			return ResponseEntity.noContent().build();
 		}
+		return ResponseEntity.notFound().build();
+	}
+	
+	@PutMapping("/{id}")
+	public ResponseEntity<Veiculo> atualizar(@RequestBody Veiculo veiculo, @PathVariable Integer id) {
+		if (!veiculosRepository.existsById(id)) {
+			return ResponseEntity.notFound().build();
+		}
+		veiculo = veiculosRepository.save(veiculo);
+		return ResponseEntity.ok(veiculo);
 	}
 
-	@PutMapping("/{id}")
-	public Veiculo atualizar(@RequestBody Veiculo veiculo, @PathVariable Integer id) {
-		for (int i = 0; i < veiculos.size(); i++) {
-			if (veiculos.get(i).getId().equals(id)) {
-				Veiculo a = new Veiculo(id, veiculo.getMarca(), veiculo.getModelo());
-				veiculos.set(i, a);
-			}
-		}
-		return null;
-	}
 }

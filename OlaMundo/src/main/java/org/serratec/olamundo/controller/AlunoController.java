@@ -23,4 +23,5 @@ public class AlunoController {
 	public List<Aluno> listar(){
 		return alunos;
 	}
+	
 }
